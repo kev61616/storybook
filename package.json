@@ -14,7 +14,8 @@
     "openai": "^4.87.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-pageflip": "^2.0.3"
+    "react-pageflip": "^2.0.3",
+    "tiktoken": "^1.0.20"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -24,6 +25,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
+    "supabase": "^2.19.7",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

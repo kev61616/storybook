@@ -9,6 +9,7 @@ import Page from './Page';
 import CoverPage from './CoverPage';
 import { saveStory, markStoryAsRead } from '../../services/storageService';
 import { ImageManagementService } from '../../services/imageManagementService';
+import { generateNarrativeAwareImagePrompts } from '../../services/storyService';
 
 /**
  * EnhancedReader component
@@ -32,23 +33,40 @@ export default function EnhancedReader({ story, onClose, onSave }: EnhancedReade
   const storyContent = story.content || [];
   const storyTheme = story.theme || 'default';
   
-  // Create image prompts for each content section
+  // Create image prompts for each content section - enhanced with narrative analysis
   const createImagePrompts = (): string[] => {
     const prompts: string[] = [];
     
     // Cover image - more detailed prompt for a beautiful cover
-    prompts.push(`Create a beautiful, detailed cover illustration for a children's story titled "${story.title}". Full page illustration, high quality, child-friendly.`);
+    prompts.push(`Create a beautiful, detailed cover illustration for a children's story titled "${story.title}". Full page illustration, high quality, child-friendly. The illustration should feature the main character and setting.`);
     
-    // For each content paragraph, create a prompt
-    storyContent.forEach((paragraph) => {
-      // For simplicity, use the first 100 characters as the prompt
-      const promptText = paragraph.substring(0, 100) + '...';
-      prompts.push(promptText);
-    });
+    // Use the new narrative-aware prompt generation if we have content
+    if (storyContent.length > 0) {
+      // If we already have image prompts, use them
+      if (story.imagePrompts && story.imagePrompts.length > 0) {
+        // Add all existing image prompts
+        prompts.push(...story.imagePrompts);
+      } else {
+        // Generate better narrative-aware image prompts
+        const narrativePrompts = generateNarrativeAwareImagePrompts(story);
+        prompts.push(...narrativePrompts);
+      }
+    } else {
+      // Fallback to simple prompts if no content
+      storyContent.forEach((paragraph) => {
+        const promptText = paragraph.substring(0, 100) + '...';
+        prompts.push(promptText);
+      });
+    }
     
     // Add end image if odd number of pages
     if (storyContent.length % 2 === 0) {
-      prompts.push(`Final illustration for the story "${story.title}", showing the main resolution or ending scene.`);
+      prompts.push(`Final illustration for the story "${story.title}", showing the main resolution or ending scene. This should provide a satisfying conclusion to the narrative.`);
+    }
+    
+    // Ensure we have at least as many images as content paragraphs
+    while (prompts.length < storyContent.length + 2) { // +2 for cover and ending
+      prompts.push(`Additional illustration for "${story.title}" showing a scene from the story with the main character.`);
     }
     
     return prompts;

@@ -1,4 +1,5 @@
 import { StoryGenerationParams } from '../../types';
+// Removed unused import
 
 /**
  * Base system prompt for story generation
@@ -39,22 +40,35 @@ export function generateTemplatePrompt(template: string, options?: {
     }
   }
   
+  // Add visualization guidance to create better image prompts
+  promptBase += `\n\nCreate a story with strong visual elements that can be illustrated effectively. Include:
+  • Clear descriptions of how characters look and dress
+  • Specific settings with visible features
+  • Meaningful actions that can be depicted visually
+  • Emotional moments with expressive faces or body language
+  `;
+  
   // Add formatting instructions
   const formattingInstructions = `
     
-    The story should have a beginning, middle, and end.
+    The story should have a clear beginning (introduction), middle (challenge or adventure), and end (resolution).
     
     Return your response as a JSON object with this format:
     {
       "title": "The story title",
       "content": ["Paragraph 1", "Paragraph 2", "Paragraph 3", ...], 
       "theme": "${template}",
-      "imagePrompts": ["A descriptive prompt for an illustration that matches paragraph 1", "A descriptive prompt for an illustration that matches paragraph 4", "A descriptive prompt for an illustration that matches paragraph 7", "A descriptive prompt for an illustration that matches paragraph 10"]
+      "keyMoments": [
+        { "paragraphIndex": 0, "description": "Description of a key visual moment in paragraph 1" },
+        { "paragraphIndex": 3, "description": "Description of a key visual moment in paragraph 4" },
+        { "paragraphIndex": 6, "description": "Description of a key visual moment in paragraph 7" },
+        { "paragraphIndex": 9, "description": "Description of a key visual moment in paragraph 10" }
+      ]
     }
     
     The content array should contain paragraphs, each being 1-2 sentences.
     
-    For imagePrompts, create 4 descriptive prompts that would work well for generating illustrations that match specific paragraphs in your story. These should be vivid and specific.`;
+    For keyMoments, identify 4 important narrative moments that would make good illustrations. Choose moments that represent different parts of the story: introduction, development, climax, and resolution. These should be vivid and specific to help create attractive, child-friendly illustrations.`;
   
   return promptBase + formattingInstructions;
 }
@@ -92,23 +106,36 @@ export function generateKeywordsPrompt(keywords: string, options?: {
     }
   }
   
+  // Add visualization guidance to create better image prompts
+  promptBase += `\n\nCreate a story with strong visual elements that can be illustrated effectively. Include:
+  • Clear descriptions of how characters look and dress
+  • Specific settings with visible features
+  • Meaningful actions that can be depicted visually
+  • Emotional moments with expressive faces or body language
+  `;
+  
   // Add formatting instructions
   const formattingInstructions = `
     
-    The story should have a beginning, middle, and end.
+    The story should have a clear beginning (introduction), middle (challenge or adventure), and end (resolution).
     
     Return your response as a JSON object with this format:
     {
       "title": "The story title",
       "content": ["Paragraph 1", "Paragraph 2", "Paragraph 3", ...],
       "keywords": ["keyword1", "keyword2", ...],
-      "imagePrompts": ["A descriptive prompt for an illustration that matches paragraph 1", "A descriptive prompt for an illustration that matches paragraph 4", "A descriptive prompt for an illustration that matches paragraph 7", "A descriptive prompt for an illustration that matches paragraph 10"]
+      "keyMoments": [
+        { "paragraphIndex": 0, "description": "Description of a key visual moment in paragraph 1" },
+        { "paragraphIndex": 3, "description": "Description of a key visual moment in paragraph 4" },
+        { "paragraphIndex": 6, "description": "Description of a key visual moment in paragraph 7" },
+        { "paragraphIndex": 9, "description": "Description of a key visual moment in paragraph 10" }
+      ]
     }
     
     The keywords array should contain the keywords you used from the provided list.
     The content array should contain paragraphs, each being 1-2 sentences.
     
-    For imagePrompts, create 4 descriptive prompts that would work well for generating illustrations that match specific paragraphs in your story. These should be vivid and specific.`;
+    For keyMoments, identify 4 important narrative moments that would make good illustrations. Choose moments that represent different parts of the story: introduction, development, climax, and resolution. These should be vivid and specific to help create attractive, child-friendly illustrations.`;
   
   return promptBase + formattingInstructions;
 }

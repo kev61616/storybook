@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { STORY_SYSTEM_PROMPT } from '../../utils/prompts';
 import { StoryMode } from '../../types';
-import { createStoryPrompt } from '../../utils/prompts';
+import { createStoryPrompt } from '../../utils/prompts/storyPromptTemplates';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -43,29 +42,42 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Use custom prompt if provided, otherwise generate one
-    const promptContent = customPrompt || createStoryPrompt({
-      mode: mode as StoryMode,
-      template,
-      keywords
-    });
+    // Create prompt using token-aware PromptManager
+    let messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
     
-    // Use custom system prompt if provided, otherwise use default
-    const systemContent = systemPrompt || STORY_SYSTEM_PROMPT;
+    if (customPrompt) {
+      // Handle legacy custom prompt format
+      messages = [
+        {
+          role: "system" as const,
+          content: systemPrompt || "You are a creative children's storywriter who creates engaging, age-appropriate stories."
+        },
+        {
+          role: "user" as const,
+          content: customPrompt
+        }
+      ];
+    } else {
+      // Use token-optimized prompt manager
+      const promptManager = createStoryPrompt({
+        mode: mode as StoryMode,
+        template,
+        keywords,
+        options: data.options
+      });
+      
+      // Get OpenAI-compatible messages
+      messages = promptManager.createChatCompletionMessages();
+      
+      // Log token usage (optional)
+      const builtPrompt = promptManager.buildPrompt();
+      console.log(`Prompt tokens: ${builtPrompt.totalTokens} (system: ${builtPrompt.systemTokens}, user: ${builtPrompt.userTokens})`);
+    }
     
     // Generate story using OpenAI's GPT
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: systemContent
-        },
-        {
-          role: "user",
-          content: promptContent
-        }
-      ],
+      messages,
       response_format: { type: "json_object" },
       temperature: 0.7,
     });

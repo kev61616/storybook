@@ -178,8 +178,39 @@ StoryBuddy implements a comprehensive personalization system:
 - **Reading Preferences**: Reading mode (standard or immersive) and speech narration options 
 - **Voice Settings**: Voice selection and reading speed for text-to-speech narration
 
+## Advanced Prompt Engineering
+
+StoryBuddy implements a sophisticated token-aware prompt management system:
+
+- **Token-Optimized Prompts**: Automatically manages token budgets for efficient API usage
+- **Modular Prompt Architecture**: Component-based prompt construction for easier maintenance
+- **Priority-Based Inclusion**: Intelligently includes or truncates content based on importance
+- **Template Variables**: Supports dynamic content injection via variable placeholders
+- **Token Counting**: Accurately counts tokens using OpenAI's tiktoken library
+- **Separate System/User Content**: Properly manages role-based message structure
+- **Automatic Truncation**: Smartly truncates content to fit within token limits while preserving critical information
+- **Token Usage Analytics**: Provides detailed token usage metrics for optimization
+
+## Story-Image Integration System
+
+StoryBuddy uses a sophisticated narrative-aware image generation system:
+
+- **Narrative Analysis Engine**: Analyzes story structure to identify key visual moments
+- **Page-Specific Illustrations**: Every page is guaranteed to have both text and a relevant illustration
+- **Context-Aware Image Prompts**: Images are generated with awareness of the full story context
+- **Character Consistency**: Characters maintain consistent appearance throughout illustrations
+- **Visual Storytelling**: Illustrations are carefully mapped to narrative progression
+- **Safety Optimized**: Image prompts are designed to avoid content policy violations
+- **Key Moment Detection**: Automatically identifies the most visually impactful story moments
+- **Style Consistency**: Maintains consistent art style across all story illustrations
+
 ## Last Updated
 
+- Implemented token-aware prompt management system for optimized API usage - 03/15/2025
+- Implemented narrative analysis engine for better story-image integration - 03/15/2025
+- Enhanced image prompt generation with story context awareness - 03/15/2025
+- Improved image allocation system to guarantee every page has a relevant illustration - 03/15/2025
+- Added key moment detection for optimal illustration placement - 03/15/2025
 - Enhanced reader experience with larger pages and guaranteed image+text on every page - 03/15/2025
 - Added beautiful user interface with detailed progress tracking for image generation - 03/15/2025
 - Created theme-specific loading animations with decorative elements - 03/15/2025

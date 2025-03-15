@@ -3,6 +3,14 @@
  */
 
 /**
+ * Key moment for illustration
+ */
+export interface KeyMoment {
+  paragraphIndex: number;
+  description: string;
+}
+
+/**
  * Represents a complete story with its content and metadata
  */
 export interface StoryData {
@@ -15,6 +23,7 @@ export interface StoryData {
   images?: string[]; // URLs of generated images
   storyLength?: 'short' | 'medium' | 'long';
   readingLevel?: 'easy' | 'moderate' | 'advanced';
+  keyMoments?: KeyMoment[]; // Key narrative moments for illustrations
 }
 
 /**
