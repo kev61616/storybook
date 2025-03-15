@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { enhanceImagePrompt } from '../../utils/prompts';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -13,7 +14,8 @@ const openai = new OpenAI({
 export async function POST(request: NextRequest) {
   try {
     // Get request data
-    const { prompt } = await request.json();
+    const data = await request.json();
+    const { prompt, enhancedPrompt: customPrompt } = data;
     
     if (!prompt || prompt.trim() === '') {
       return NextResponse.json(
@@ -22,13 +24,13 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Enhance the prompt for child-friendly content
-    const enhancedPrompt = `Create a child-friendly, colorful, and engaging illustration for a children's storybook: ${prompt}. The style should be suitable for children aged 4-10, avoid realistic scary elements, use bright colors, and have a whimsical, positive tone. Make it look like a professional children's book illustration.`;
+    // Use provided prompt if specified, otherwise enhance the original prompt
+    const finalPrompt = customPrompt || enhanceImagePrompt(prompt);
     
     // Generate image using OpenAI's DALL-E
     const response = await openai.images.generate({
       model: "dall-e-3",
-      prompt: enhancedPrompt,
+      prompt: finalPrompt,
       n: 1,
       size: "1024x1024",
       style: "vivid",

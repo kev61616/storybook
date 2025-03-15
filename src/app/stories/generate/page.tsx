@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Navigation from "../../components/Navigation";
-import Link from "next/link";
 import { generateStory, generateImage, StoryData } from "../../utils/api";
 import ImmersiveReader from "../../components/ImmersiveReader";
 
@@ -12,6 +12,17 @@ import ImmersiveReader from "../../components/ImmersiveReader";
  * Shows the story with AI-generated illustrations in a kid-friendly format
  */
 export default function GenerateStory() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading parameters...</div>}>
+      <GenerateStoryContent />
+    </Suspense>
+  );
+}
+
+/**
+ * Internal component that uses useSearchParams inside a Suspense boundary
+ */
+function GenerateStoryContent() {
   const searchParams = useSearchParams();
   const template = searchParams.get("template");
   
@@ -85,12 +96,10 @@ export default function GenerateStory() {
       setProgress(10);
       
       // Generate story from the template using OpenAI
-      // Pass storyLength in the keywords field as JSON
-      const options = JSON.stringify({
-        storyLength,
-        readingLevel
-      });
-      const storyData = await generateStory('template', template, options);
+      // Include options in the template name
+      const templateWithOptions = `${template} (length: ${storyLength}, reading level: ${readingLevel})`;
+      const storyData = await generateStory('template', templateWithOptions);
+      
       setProgress(40);
       setStory(storyData);
       
@@ -103,8 +112,14 @@ export default function GenerateStory() {
         
         // Generate each image sequentially
         for (let i = 0; i < totalImages; i++) {
-          const imageUrl = await generateImage(storyData.imagePrompts[i]);
-          images.push(imageUrl);
+          try {
+            const imageUrl = await generateImage(storyData.imagePrompts[i]);
+            images.push(imageUrl);
+          } catch (error) {
+            console.error(`Error generating image ${i}:`, error);
+            // If image generation fails, use a placeholder
+            images.push("https://placehold.co/600x400/e0f2fe/0284c7?text=Image+Generation+Failed");
+          }
           setProgress(40 + Math.floor(((i + 1) / totalImages) * 60));
         }
         

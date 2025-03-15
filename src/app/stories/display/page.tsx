@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Navigation from "../../components/Navigation";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import Navigation from "../../components/Navigation";
 import { generateStory, generateImage, StoryData } from "../../utils/api";
 import ImmersiveReader from "../../components/ImmersiveReader";
 import { saveStory } from "../../utils/storage";
@@ -14,8 +14,23 @@ import { saveStory } from "../../utils/storage";
  * Displays a custom story with AI-generated illustrations based on provided keywords
  */
 export default function DisplayStory() {
+  // Wrap content in a suspense boundary for useSearchParams
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading parameters...</div>}>
+      <StoryDisplayContent />
+    </Suspense>
+  );
+}
+
+// Component with the search params logic, wrapped in Suspense
+function StoryDisplayContent() {
   const searchParams = useSearchParams();
   const keywords = searchParams.get("keywords") || "";
+  
+  // Get additional story settings from URL
+  const ageRange = searchParams.get("ageRange") || "6-12";
+  const gender = searchParams.get("gender") || "neutral";
+  const personality = searchParams.get("personality") || "curious";
   
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<'generating-story' | 'generating-images' | 'complete'>('generating-story');
@@ -25,11 +40,6 @@ export default function DisplayStory() {
   const [isImmersiveMode, setIsImmersiveMode] = useState(false);
   // State to track if the story has been saved
   const [isSaved, setIsSaved] = useState(false);
-
-  // Get additional story settings from URL
-  const ageRange = searchParams.get("ageRange") || "6-12";
-  const gender = searchParams.get("gender") || "neutral";
-  const personality = searchParams.get("personality") || "curious";
 
   useEffect(() => {
     async function createStory() {
@@ -78,7 +88,7 @@ export default function DisplayStory() {
     if (keywords) {
       createStory();
     }
-  }, [keywords]);
+  }, [keywords, ageRange, gender, personality]); // Include all dependencies
 
   // Determine which paragraphs will have illustrations
   const getIllustratedParagraphIndices = () => {
@@ -91,7 +101,7 @@ export default function DisplayStory() {
     
     // If we have fewer than 4 images, use what we have
     if (images.length < 4) {
-      return images.map((_, i) => i * Math.floor(content.length / (images.length + 1)));
+      return images.map((_: unknown, i: number) => i * Math.floor(content.length / (images.length + 1)));
     }
     
     // Otherwise, distribute 4 images evenly
@@ -149,14 +159,14 @@ export default function DisplayStory() {
             <div className="mb-8 text-center">
               <p className="text-sm text-gray-500 mb-2">This story was created with these keywords:</p>
               <div className="flex flex-wrap gap-2 justify-center">
-                {story.keywords ? story.keywords.map((keyword, index) => (
+                {story.keywords ? story.keywords.map((keyword: string, index: number) => (
                   <span 
                     key={index}
                     className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
                   >
                     {keyword}
                   </span>
-                )) : keywords.split(",").map((keyword, index) => (
+                )) : keywords.split(",").map((keyword: string, index: number) => (
                   <span 
                     key={index}
                     className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"

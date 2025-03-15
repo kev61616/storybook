@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { STORY_SYSTEM_PROMPT } from '../../utils/prompts';
+import { StoryMode } from '../../types';
+import { createStoryPrompt } from '../../utils/prompts';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -15,8 +18,10 @@ const openai = new OpenAI({
 export async function POST(request: NextRequest) {
   try {
     // Get request data
-    const { mode, template, keywords } = await request.json();
+    const data = await request.json();
+    const { mode, template, keywords, systemPrompt, prompt: customPrompt } = data;
     
+    // Validate core parameters
     if (mode !== 'template' && mode !== 'keywords') {
       return NextResponse.json(
         { error: 'Mode must be either "template" or "keywords"' },
@@ -38,8 +43,15 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Get appropriate prompt based on mode
-    const prompt = getPrompt(mode, template, keywords);
+    // Use custom prompt if provided, otherwise generate one
+    const promptContent = customPrompt || createStoryPrompt({
+      mode: mode as StoryMode,
+      template,
+      keywords
+    });
+    
+    // Use custom system prompt if provided, otherwise use default
+    const systemContent = systemPrompt || STORY_SYSTEM_PROMPT;
     
     // Generate story using OpenAI's GPT
     const completion = await openai.chat.completions.create({
@@ -47,11 +59,11 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "system",
-          content: "You are a creative children's storywriter. You write engaging, age-appropriate stories for children ages 4-10. Your stories are imaginative, positive, and teach good values. Your tone is warm and friendly."
+          content: systemContent
         },
         {
           role: "user",
-          content: prompt
+          content: promptContent
         }
       ],
       response_format: { type: "json_object" },
@@ -72,46 +84,5 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to generate story', details: errorMessage },
       { status: 500 }
     );
-  }
-}
-
-/**
- * Helper function to create the appropriate prompt based on the mode
- */
-function getPrompt(mode: string, template?: string, keywords?: string): string {
-  if (mode === 'template') {
-    return `Create a children's story based on the theme: "${template}".
-    
-    The story should be appropriate for children ages 4-10, with a beginning, middle, and end.
-    
-    Return your response as a JSON object with this format:
-    {
-      "title": "The story title",
-      "content": ["Paragraph 1", "Paragraph 2", "Paragraph 3", ...], 
-      "theme": "${template}",
-      "imagePrompts": ["A descriptive prompt for an illustration that matches paragraph 1", "A descriptive prompt for an illustration that matches paragraph 4", "A descriptive prompt for an illustration that matches paragraph 7", "A descriptive prompt for an illustration that matches paragraph 10"]
-    }
-    
-    The content array should contain 10-12 paragraphs, each being 1-2 sentences.
-    
-    For imagePrompts, create 4 descriptive prompts that would work well for generating illustrations that match specific paragraphs in your story. These should be vivid and specific.`;
-  } else {
-    // Keywords mode
-    return `Create a children's story using these keywords: ${keywords}.
-    
-    The story should be appropriate for children ages 4-10, with a beginning, middle, and end.
-    
-    Return your response as a JSON object with this format:
-    {
-      "title": "The story title",
-      "content": ["Paragraph 1", "Paragraph 2", "Paragraph 3", ...],
-      "keywords": ["keyword1", "keyword2", ...],
-      "imagePrompts": ["A descriptive prompt for an illustration that matches paragraph 1", "A descriptive prompt for an illustration that matches paragraph 4", "A descriptive prompt for an illustration that matches paragraph 7", "A descriptive prompt for an illustration that matches paragraph 10"]
-    }
-    
-    The keywords array should contain the keywords you used from the provided list.
-    The content array should contain 10-12 paragraphs, each being 1-2 sentences.
-    
-    For imagePrompts, create 4 descriptive prompts that would work well for generating illustrations that match specific paragraphs in your story. These should be vivid and specific.`;
   }
 }
