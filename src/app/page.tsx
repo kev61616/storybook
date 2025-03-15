@@ -1,9 +1,22 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import Navigation from "./components/Navigation";
+import { 
+  BackgroundShapes, 
+  themeShapes, 
+  AnimatedButton, 
+  TextReveal,
+  FloatingElement
+} from "./components/animations";
+import { 
+  HeroHeading, 
+  FeatureCard, 
+  SelectionCard, 
+  CharacterMascot 
+} from "./components/ui";
 
 export default function Home() {
   const router = useRouter();
@@ -130,58 +143,86 @@ export default function Home() {
       return `from-${color}-500 to-${color}-700`;
     }
   };
+
+  // Get personality icon
+  const getPersonalityIcon = (personality: Personality) => {
+    switch (personality) {
+      case "adventurous": return "🌄";
+      case "brave": return "🛡️";
+      case "creative": return "🎨";
+      case "curious": return "🔍";
+      case "friendly": return "👋";
+      case "gentle": return "🕊️";
+      case "kind": return "💖";
+      case "thoughtful": return "💭";
+      default: return "🔍"; // Default to curious
+    }
+  };
   
   return (
     <>
       <Navigation />
       {/* User Settings Landing Page */}
-      <div className={`min-h-screen ${getThemeClass("bg")} transition-colors duration-300`}>
+      <div className={`min-h-screen ${getThemeClass("bg")} transition-colors duration-500`}>
         <div className="container mx-auto px-4 py-8">
-          {/* Hero Section - Visual & Impactful */}
-          <header className="relative flex flex-col items-center mb-14 mt-8">
-            {/* Abstract Shapes Background */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-30 -z-10">
-              <div className={`absolute top-10 left-10 w-64 h-64 rounded-full bg-${getCurrentThemeColor()}-200 blur-3xl`}></div>
-              <div className={`absolute bottom-10 right-10 w-64 h-64 rounded-full bg-${getCurrentThemeColor()}-300 blur-3xl`}></div>
+          {/* Hero Section - Visual & Immersive */}
+          <header className="relative flex flex-col items-center mb-14 mt-8 overflow-hidden">
+            {/* Animated Background Shapes */}
+            <div className="absolute top-0 left-0 w-full h-full opacity-30 -z-10">
+              <BackgroundShapes shapes={themeShapes[
+                userProfile.childAge === "3-5" ? "adventure" : 
+                userProfile.childAge === "6-8" ? "fantasy" : 
+                userProfile.childAge === "9-12" ? "space" : "default"
+              ]} />
             </div>
             
-            {/* Main Title with Animation */}
-            <h1 className={`font-[family-name:var(--font-baloo)] text-6xl md:text-7xl text-center ${getThemeClass("text")} font-bold mb-4 animate-fadeIn`}>
-              StoryBuddy
-            </h1>
+            {/* Main Title & Subtitle with Animation */}
+            <HeroHeading
+              title="StoryBuddy"
+              subtitle="Create magical stories and illustrations for curious little minds"
+              highlightWords={["magical", "stories", "curious"]}
+              themeColor={getCurrentThemeColor()}
+            />
             
-            {/* Tagline with Visual Flair */}
-            <div className="relative">
-              <p className="text-xl md:text-2xl text-center text-gray-600 max-w-2xl mb-6 animate-fadeIn animation-delay-100">
-                Create magical stories and illustrations for curious little minds
-              </p>
-              <div className={`w-36 h-1.5 bg-gradient-to-r ${getThemeClass("gradient")} rounded-full mx-auto`}></div>
-            </div>
-            
-            {/* Visual Characters */}
-            <div className="flex justify-center mt-6 space-x-8 animate-fadeIn animation-delay-200">
-              <div className="relative w-16 h-16">
-                <div className={`absolute -inset-1 rounded-full bg-gradient-to-r ${getThemeClass("gradient")} blur-sm opacity-70`}></div>
-                <div className="relative bg-white rounded-full w-full h-full flex items-center justify-center text-3xl">
-                  👦
+            {/* Visual Characters with Floating Animation */}
+            <motion.div 
+              className="flex justify-center mt-8 space-x-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <div className="relative">
+                <div className={`absolute -inset-2 rounded-full bg-gradient-to-r ${getThemeClass("gradient")} blur-sm opacity-70`}></div>
+                <div className="relative bg-white rounded-full w-20 h-20 flex items-center justify-center text-4xl shadow-lg">
+                  {userProfile.childGender === "boy" ? "👦" : "👧"}
                 </div>
               </div>
-              <div className="relative w-16 h-16">
-                <div className={`absolute -inset-1 rounded-full bg-gradient-to-r ${getThemeClass("gradient")} blur-sm opacity-70`}></div>
-                <div className="relative bg-white rounded-full w-full h-full flex items-center justify-center text-3xl">
-                  👧
-                </div>
-              </div>
-            </div>
+              
+              {/* Character Mascot */}
+              <CharacterMascot
+                imageSrc="/friendly-character.svg"
+                themeColor={getCurrentThemeColor()}
+                size={180}
+              />
+            </motion.div>
           </header>
 
           {/* Main Content */}
           <main className="flex flex-col items-center">
             {/* Personalization Section */}
-            <div className="w-full max-w-3xl mb-10 bg-white rounded-2xl shadow-md p-6 md:p-8">
-              <h2 className={`font-[family-name:var(--font-baloo)] text-3xl ${getThemeClass("text")} font-bold mb-6 text-center`}>
-                User Settings
-              </h2>
+            <div className="w-full max-w-3xl mb-10 bg-white rounded-2xl shadow-lg p-6 md:p-8">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <h2 className={`font-[family-name:var(--font-baloo)] text-3xl ${getThemeClass("text")} font-bold mb-6 text-center`}>
+                  <TextReveal 
+                    text="User Settings"
+                    delay={0.2}
+                  />
+                </h2>
+              </motion.div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 {/* Age Range Selection */}
@@ -190,27 +231,26 @@ export default function Home() {
                     I am...
                   </label>
                   <div className="grid grid-cols-1 gap-3">
-                    {ageRanges.map((option) => (
-                      <button
+                    {ageRanges.map((option, index) => (
+                      <motion.div
                         key={option.value}
-                        type="button"
-                        onClick={() => setUserProfile({...userProfile, childAge: option.value})}
-                        className={`flex items-center p-3 rounded-xl border-2 transition-all
-                          ${userProfile.childAge === option.value 
-                            ? `border-${option.theme}-500 bg-${option.theme}-50 shadow-md` 
-                            : 'border-gray-200 hover:border-gray-300'}`
-                        }
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 * index }}
                       >
-                        <div className={`w-10 h-10 rounded-full bg-${option.theme}-100 flex items-center justify-center mr-3 text-${option.theme}-600`}>
-                          {option.value === "3-5" && "🧸"}
-                          {option.value === "6-8" && "🚀"}
-                          {option.value === "9-12" && "🔍"}
-                          {option.value === "teenager" && "🎮"}
-                        </div>
-                        <span className="font-medium text-gray-800">
-                          {option.label}
-                        </span>
-                      </button>
+                        <SelectionCard
+                          label={option.label}
+                          icon={
+                            option.value === "3-5" ? "🧸" :
+                            option.value === "6-8" ? "🚀" :
+                            option.value === "9-12" ? "🔍" : "🎮"
+                          }
+                          isSelected={userProfile.childAge === option.value}
+                          onClick={() => setUserProfile({...userProfile, childAge: option.value})}
+                          theme={option.theme}
+                          className="w-full"
+                        />
+                      </motion.div>
                     ))}
                   </div>
                 </div>
@@ -223,123 +263,151 @@ export default function Home() {
                       Main character should be a...
                     </label>
                     <div className="flex space-x-3">
-                      {genderOptions.map((option) => {
+                      {genderOptions.map((option, index) => {
                         const themeColor = themeColors[userProfile.childAge][option.value];
                         return (
-                          <button
+                          <motion.div
                             key={option.value}
-                            type="button"
-                            onClick={() => setUserProfile({...userProfile, childGender: option.value})}
-                            className={`flex-1 py-3 px-4 rounded-full transition-all ${
-                              userProfile.childGender === option.value
-                                ? `bg-${themeColor}-500 text-white shadow-md`
-                                : `bg-gray-100 text-gray-700 hover:bg-gray-200`
-                            }`}
+                            className="flex-1"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.2 + (0.1 * index) }}
                           >
-                            {option.value === "boy" ? "👦 " : "👧 "} 
-                            {option.label}
-                          </button>
+                            <AnimatedButton
+                              onClick={() => setUserProfile({...userProfile, childGender: option.value})}
+                              variant={userProfile.childGender === option.value ? "primary" : "secondary"}
+                              themeColor={themeColor}
+                              icon={option.value === "boy" ? "👦" : "👧"}
+                              fullWidth
+                            >
+                              {option.label}
+                            </AnimatedButton>
+                          </motion.div>
                         );
                       })}
                     </div>
                   </div>
                   
-                  {/* Personality Select */}
+                  {/* Personality Selection */}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Character Personality
                     </label>
-                    <select 
-                      value={userProfile.childPersonality}
-                      onChange={(e) => setUserProfile({...userProfile, childPersonality: e.target.value as Personality})}
-                      className={`w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-${getCurrentThemeColor()}-500 focus:border-transparent`}
+                    <motion.div 
+                      className="bg-white rounded-xl border border-gray-200 p-2"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.4 }}
                     >
-                      {personalityOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      <div className="grid grid-cols-2 gap-2">
+                        {personalityOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setUserProfile({...userProfile, childPersonality: option.value})}
+                            className={`flex items-center p-2 rounded-lg transition-all ${
+                              userProfile.childPersonality === option.value
+                                ? `bg-${getCurrentThemeColor()}-100 text-${getCurrentThemeColor()}-600 font-medium`
+                                : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className="mr-2">{getPersonalityIcon(option.value)}</span>
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
                   </div>
                 </div>
               </div>
               
               {/* Continue Button */}
               <div className="mt-8 text-center">
-                <button 
-                  onClick={showTemplatesSection}
-                  className={`py-3 px-8 bg-gradient-to-r ${getThemeClass("gradient")} text-white rounded-full font-[family-name:var(--font-baloo)] font-medium text-lg hover:opacity-90 transition-opacity shadow-md`}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
                 >
-                  Continue to Story Options
-                </button>
+                  <AnimatedButton
+                    onClick={showTemplatesSection}
+                    themeColor={getCurrentThemeColor()}
+                    size="lg"
+                    className="font-[family-name:var(--font-baloo)]"
+                    icon={
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+                      </svg>
+                    }
+                    iconPosition="right"
+                  >
+                    Continue to Story Options
+                  </AnimatedButton>
+                </motion.div>
               </div>
-            </div>
-            
-            {/* Animated character */}
-            <div className="relative w-48 h-48 mb-8">
-              <Image
-                src="/friendly-character.svg"
-                alt="Friendly character"
-                fill
-                className="object-contain"
-                priority
-              />
             </div>
 
             {/* Feature Highlights */}
-            <div className="mt-8 w-full max-w-4xl">
+            <div className="mt-12 w-full max-w-4xl">
               <h2 className={`font-[family-name:var(--font-baloo)] text-3xl text-center ${getThemeClass("text")} font-bold mb-8`}>
-                Magical Features
+                <TextReveal 
+                  text="Magical Features"
+                  delay={0.2}
+                  highlightWords={["Magical"]}
+                  highlightClassName={`bg-clip-text text-transparent bg-gradient-to-r ${getThemeClass("gradient")}`}
+                />
               </h2>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Feature 1 */}
-                <div className="bg-white rounded-xl p-5 text-center shadow-md">
-                  <div className={`${getThemeClass("bg")} rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4`}>
-                    <span className="text-2xl">🎨</span>
-                  </div>
-                  <h3 className="font-[family-name:var(--font-baloo)] text-xl font-semibold mb-2">
-                    Beautiful Illustrations
-                  </h3>
-                  <p className="text-gray-600">
-                    Colorful pictures that bring your stories to life
-                  </p>
-                </div>
+                {/* Feature Cards */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                  <FeatureCard
+                    title="Beautiful Illustrations"
+                    description="Colorful pictures that bring your stories to life"
+                    icon="🎨"
+                    color={getCurrentThemeColor()}
+                  />
+                </motion.div>
                 
-                {/* Feature 2 */}
-                <div className="bg-white rounded-xl p-5 text-center shadow-md">
-                  <div className={`${getThemeClass("bg")} rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4`}>
-                    <span className="text-2xl">📚</span>
-                  </div>
-                  <h3 className="font-[family-name:var(--font-baloo)] text-xl font-semibold mb-2">
-                    Exciting Stories
-                  </h3>
-                  <p className="text-gray-600">
-                    Adventure-filled tales that spark imagination
-                  </p>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <FeatureCard
+                    title="Exciting Stories"
+                    description="Adventure-filled tales that spark imagination"
+                    icon="📚"
+                    color={getCurrentThemeColor()}
+                  />
+                </motion.div>
                 
-                {/* Feature 3 */}
-                <div className="bg-white rounded-xl p-5 text-center shadow-md">
-                  <div className={`${getThemeClass("bg")} rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4`}>
-                    <span className="text-2xl">📱</span>
-                  </div>
-                  <h3 className="font-[family-name:var(--font-baloo)] text-xl font-semibold mb-2">
-                    Immersive Reading
-                  </h3>
-                  <p className="text-gray-600">
-                    Page-turning animations that feel like a real book
-                  </p>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                >
+                  <FeatureCard
+                    title="Immersive Reading"
+                    description="Page-turning animations with narration"
+                    icon="📱"
+                    color={getCurrentThemeColor()}
+                  />
+                </motion.div>
               </div>
             </div>
           </main>
 
           {/* Footer */}
           <footer className="mt-20 text-center text-gray-500">
-            <p className="text-sm">
-              Made with ❤️ for curious children everywhere
-            </p>
+            <FloatingElement duration={6} yOffset={5}>
+              <p className="text-sm">
+                Made with ❤️ for curious children everywhere
+              </p>
+            </FloatingElement>
           </footer>
         </div>
       </div>
@@ -354,46 +422,54 @@ export default function Home() {
         {/* Mode Selection Header with Back Button */}
         <div className="sticky top-0 z-10 bg-white shadow-sm p-4">
           <div className="container mx-auto flex items-center justify-between">
-            <button 
+            <AnimatedButton
               onClick={() => setShowTemplates(false)}
-              className="flex items-center text-gray-700 hover:text-gray-900"
+              variant="secondary"
+              size="sm"
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              }
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span className="font-medium">Back to User Settings</span>
-            </button>
+              Back to Settings
+            </AnimatedButton>
             
             <h2 className={`font-[family-name:var(--font-baloo)] text-2xl ${getThemeClass("text")} font-bold`}>
               Mode Selection
             </h2>
             
-            <div className="w-24"></div> {/* Empty div for balanced flex layout */}
+            <div className="w-32"></div> {/* Empty div for balanced flex layout */}
           </div>
         </div>
         
         <div className="container mx-auto px-4 py-6">
           {/* Visual Header */}
-          <header className="text-center mb-10 animate-fadeIn">
-            <h1 className={`font-[family-name:var(--font-baloo)] text-4xl md:text-5xl text-${getCurrentThemeColor()}-600 font-bold mb-3`}>
-              Choose Your Adventure
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              How would you like to create your magical story today?
-            </p>
-            <div className={`w-24 h-1 bg-gradient-to-r ${getThemeClass("gradient")} rounded-full mt-3 mx-auto`}></div>
+          <header className="text-center mb-10">
+            <HeroHeading
+              title="Choose Your Adventure"
+              subtitle="How would you like to create your magical story today?"
+              themeColor={getCurrentThemeColor()}
+              highlightWords={["Adventure", "magical"]}
+            />
           </header>
           
           {/* Mode Selection - Visually Enhanced */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl mx-auto">
             {/* Templates Option - Visual Card */}
-            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 duration-300 overflow-hidden animate-fadeIn">
+            <motion.div 
+              className="bg-white rounded-2xl shadow-lg overflow-hidden h-full"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              whileHover={{ y: -5 }}
+            >
               <div className={`h-3 w-full bg-gradient-to-r from-blue-500 to-blue-700`}></div>
-              <div className="p-8">
+              <div className="p-8 flex flex-col h-full">
                 <div className="flex items-center mb-4">
-                  <div className="bg-blue-100 p-3 rounded-full mr-4">
+                  <FloatingElement yOffset={6} duration={4} className="bg-blue-100 p-3 rounded-full mr-4">
                     <span className="text-4xl">📚</span>
-                  </div>
+                  </FloatingElement>
                   <h2 className={`font-[family-name:var(--font-baloo)] text-2xl text-blue-600 font-bold`}>
                     Story Templates
                   </h2>
@@ -414,26 +490,39 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
-                  <div className="relative text-5xl">📚</div>
+                  <FloatingElement yOffset={10}>
+                    <span className="relative text-5xl">📚</span>
+                  </FloatingElement>
                 </div>
                 
-                <button 
-                  onClick={() => navigateWithProfile('/stories/templates')}
-                  className={`w-full block text-center py-4 px-6 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full font-[family-name:var(--font-baloo)] text-lg font-medium hover:opacity-90 transition-opacity shadow-md`}
-                >
-                  Browse Templates
-                </button>
+                <div className="mt-auto">
+                  <AnimatedButton
+                    onClick={() => navigateWithProfile('/stories/templates')}
+                    themeColor="blue"
+                    fullWidth
+                    size="lg"
+                    className="font-[family-name:var(--font-baloo)]"
+                  >
+                    Browse Templates
+                  </AnimatedButton>
+                </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Custom Story Option - Visual Card */}
-            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 duration-300 overflow-hidden animate-fadeIn animation-delay-100">
+            <motion.div 
+              className="bg-white rounded-2xl shadow-lg overflow-hidden h-full"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              whileHover={{ y: -5 }}
+            >
               <div className={`h-3 w-full bg-gradient-to-r from-pink-500 to-orange-500`}></div>
-              <div className="p-8">
+              <div className="p-8 flex flex-col h-full">
                 <div className="flex items-center mb-4">
-                  <div className="bg-pink-100 p-3 rounded-full mr-4">
+                  <FloatingElement yOffset={6} duration={4} className="bg-pink-100 p-3 rounded-full mr-4">
                     <span className="text-4xl">✏️</span>
-                  </div>
+                  </FloatingElement>
                   <h2 className={`font-[family-name:var(--font-baloo)] text-2xl text-pink-600 font-bold`}>
                     Custom Story
                   </h2>
@@ -456,17 +545,24 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
-                  <div className="relative text-5xl">✏️</div>
+                  <FloatingElement yOffset={10}>
+                    <span className="relative text-5xl">✏️</span>
+                  </FloatingElement>
                 </div>
                 
-                <button 
-                  onClick={() => navigateWithProfile('/stories/create')}
-                  className={`w-full block text-center py-4 px-6 bg-gradient-to-r from-pink-500 to-orange-500 text-white rounded-full font-[family-name:var(--font-baloo)] text-lg font-medium hover:opacity-90 transition-opacity shadow-md`}
-                >
-                  Create Custom Story
-                </button>
+                <div className="mt-auto">
+                  <AnimatedButton
+                    onClick={() => navigateWithProfile('/stories/create')}
+                    themeColor="pink"
+                    fullWidth
+                    size="lg"
+                    className="font-[family-name:var(--font-baloo)]"
+                  >
+                    Create Custom Story
+                  </AnimatedButton>
+                </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

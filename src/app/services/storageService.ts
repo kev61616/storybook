@@ -1,4 +1,4 @@
-import { StoryData } from '../types';
+import { StoryData, SavedStory } from '../types';
 
 /**
  * Key used to store saved stories in localStorage
@@ -8,9 +8,9 @@ const SAVED_STORIES_KEY = 'storybuddy_saved_stories';
 /**
  * Save a story to localStorage
  * @param story - The story data to save
- * @returns The saved story with a generated ID
+ * @returns The saved story with metadata (savedAt, isRead)
  */
-export function saveStory(story: StoryData): StoryData {
+export function saveStory(story: StoryData): SavedStory {
   try {
     // Get existing saved stories
     const savedStories = getStoredStories();
@@ -20,18 +20,25 @@ export function saveStory(story: StoryData): StoryData {
       story.id = generateStoryId();
     }
     
+    // Create SavedStory with metadata
+    const savedStory: SavedStory = {
+      ...story,
+      savedAt: Date.now(),
+      isRead: false
+    };
+    
     // Add or update story in the array
     const existingIndex = savedStories.findIndex(s => s.id === story.id);
     if (existingIndex >= 0) {
-      savedStories[existingIndex] = story;
+      savedStories[existingIndex] = savedStory;
     } else {
-      savedStories.push(story);
+      savedStories.push(savedStory);
     }
     
     // Save back to localStorage
     localStorage.setItem(SAVED_STORIES_KEY, JSON.stringify(savedStories));
     
-    return story;
+    return savedStory;
   } catch (error) {
     console.error('Error saving story:', error);
     throw error;
@@ -42,7 +49,7 @@ export function saveStory(story: StoryData): StoryData {
  * Get all stored stories from localStorage
  * @returns Array of saved story data
  */
-export function getStoredStories(): StoryData[] {
+export function getStoredStories(): SavedStory[] {
   try {
     // Return empty array if running server-side
     if (typeof window === 'undefined') {
@@ -95,13 +102,42 @@ export function deleteStory(storyId: string): boolean {
  * @param storyId - ID of the story to retrieve
  * @returns The story data or null if not found
  */
-export function getStoryById(storyId: string): StoryData | null {
+export function getStoryById(storyId: string): SavedStory | null {
   try {
     const savedStories = getStoredStories();
     const story = savedStories.find(s => s.id === storyId);
     return story || null;
   } catch (error) {
     console.error('Error getting story by ID:', error);
+    return null;
+  }
+}
+
+/**
+ * Mark a story as read
+ * @param storyId - ID of the story to mark as read
+ * @returns Updated story or null if not found
+ */
+export function markStoryAsRead(storyId: string): SavedStory | null {
+  try {
+    // Get existing saved stories
+    const savedStories = getStoredStories();
+    
+    // Find the story to update
+    const storyIndex = savedStories.findIndex(story => story.id === storyId);
+    if (storyIndex === -1) {
+      return null;
+    }
+    
+    // Update the isRead status
+    savedStories[storyIndex].isRead = true;
+    
+    // Save back to localStorage
+    localStorage.setItem(SAVED_STORIES_KEY, JSON.stringify(savedStories));
+    
+    return savedStories[storyIndex];
+  } catch (error) {
+    console.error('Error marking story as read:', error);
     return null;
   }
 }

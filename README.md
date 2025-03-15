@@ -9,6 +9,12 @@ This beautiful webapp for children helps create illustrations and stories using 
   - Phase 1: User Settings landing page with beautiful hero section and intuitive personalization controls
   - Phase 2: Mode Selection page with visually stunning template/custom story options
   - Seamless sliding transitions between phases for a cohesive experience
+- **Full-Screen Reading Experience**:
+  - Every page contains both text and a beautiful illustration for maximum engagement
+  - Optimized larger page size for better readability and visual impact
+  - Responsive design that works well on various screen sizes
+- **Text-to-Speech Narration**: Child-friendly speech controls to read stories aloud
+- **Adaptive Typography**: Customizable font sizes, spacing, and styles optimized for reading
 - **Persistent Settings**: User preferences saved to localStorage to remember choices between sessions
 - **Personalization**: Customize story experiences with age range, gender preferences, and character personality traits 
 - **Smooth UI Transitions**: Beautiful sliding animations when navigating between sections for an engaging user experience
@@ -21,7 +27,8 @@ This beautiful webapp for children helps create illustrations and stories using 
 - **Interactive Experience**: Watch as stories and illustrations are generated in real-time
 - **Template Library**: Choose from various story themes like Adventure, Fantasy, Space, and more
 - **Keyword Suggestions**: Get inspiration for story creation with suggested keywords
-- **Immersive Reading**: Book-like experience with page-turning animations for maximum immersion
+- **Immersive Reading**: Book-like experience with page-turning animations, full-page cover illustrations, speech narration, and typography controls
+- **Reliable Image Generation**: Bulletproof image system with localStorage caching, batch processing, and automatic retries
 - **Story Saving**: Save favorite stories to read again later
 - **My Stories Collection**: Browse, search, and organize your saved stories
 
@@ -32,7 +39,7 @@ This beautiful webapp for children helps create illustrations and stories using 
 - **Styling**: Tailwind CSS 4
 - **Animation**: Smooth sliding transitions and fading animations for UI elements, React PageFlip for book animations
 - **AI Integration**: OpenAI API for story generation and DALL-E for illustrations
-- **Storage**: LocalStorage for story saving (prepared for Supabase integration)
+- **Storage**: LocalStorage for story saving and image caching (prepared for Supabase integration)
 - **API Routes**: Server-side API endpoints for secure AI integration
 - **Linting**: ESLint 9
 
@@ -52,7 +59,22 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 /app                     # App Router directory
   /components            # Reusable components
     /Navigation.tsx      # Main navigation component
-    /ImmersiveReader.tsx # Book-like reading experience
+    /reader/             # Reader components
+      /Page.tsx          # Individual book page component
+      /CoverPage.tsx     # Full-page book cover component
+      /EnhancedReader.tsx # Immersive reading experience with TTS
+    /speech/             # Speech-related components
+      /SpeechControls.tsx # Text-to-speech control panel
+    /animations/         # Animation components
+      /FloatingElement.tsx # Floating animation component
+      /TextReveal.tsx    # Animated text reveal component
+      /BackgroundShapes.tsx # Dynamic background shapes
+    /ui/                 # Core UI components
+      /HeroHeading.tsx   # Animated hero section headings
+      /FeatureCard.tsx   # Feature highlight cards
+      /SelectionCard.tsx # Interactive selection cards
+  /context               # React Context providers
+    /TypographyContext.tsx # Font and typography settings
   /api                   # API routes for AI integration
     /generate-story      # OpenAI GPT-4 story generation endpoint
     /generate-image      # DALL-E 3 image generation endpoint
@@ -64,10 +86,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     /my-stories          # Collection of saved stories
   /types                 # TypeScript type definitions
     /story.ts            # Story-related types
+    /ui.ts               # UI component prop types
     /index.ts            # Central export for types
   /utils                 # Utility functions
     /api.ts              # API client functions (legacy)
     /storage.ts          # Story storage and retrieval (legacy)
+  /fonts.ts              # Font definitions and optimization
     /prompts/            # Prompt generation utilities
       /storyPrompts.ts   # Story prompt generators
       /imagePrompts.ts   # Image prompt enhancers
@@ -77,9 +101,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
   /services              # Service layer
     /storyService.ts     # Story generation service
     /imageService.ts     # Image generation service
+    /imageManagementService.ts # Advanced image management with caching
     /storageService.ts   # Local storage service
+    /speechService.ts    # Text-to-speech service
   /page.tsx              # Homepage with personalization
 /public                  # Static assets
+  /paper-texture.png     # Paper texture for book pages
 ```
 
 ## Code Organization
@@ -88,31 +115,46 @@ The codebase has been modularized for better maintainability:
 
 1. **Types Module** - Central place for type definitions:
    - `StoryData`, `StoryTheme`, `StoryMode`, etc.
+   - UI component props types (`PageProps`, `SpeechControlsProps`, etc.)
    - Improves type safety across the application
 
-2. **Prompts Module** - Handles AI prompt generation:
+2. **Context Providers** - State management:
+   - Typography settings with persistent preferences
+   - Theming and appearance settings
+   - Common shared state
+
+3. **Component Library** - Modular UI building blocks:
+   - Reader components (Page, CoverPage, EnhancedReader)
+   - Speech components (SpeechControls)
+   - Animation components (FloatingElement, TextReveal)
+   - UI components (HeroHeading, FeatureCard, SelectionCard)
+
+4. **Prompts Module** - Handles AI prompt generation:
    - Parameterized story prompt generation
    - Image prompt enhancement
    - System prompts for consistent AI outputs
 
-3. **Templates Module** - Manages story templates:
+5. **Templates Module** - Manages story templates:
    - Template definitions and metadata
    - Theme mapping for UI consistency
    - Helper functions for template operations
 
-4. **Services Layer** - Business logic encapsulation:
+6. **Services Layer** - Business logic encapsulation:
    - Story generation services
-   - Image generation with fallbacks
+   - Image generation with fallbacks and caching
    - Local storage operations
+   - Speech synthesis service
 
 ## Design Principles
 
 - **Accessibility**: Making the app accessible to all children
 - **Child Safety**: Ensuring all content is appropriate for children
 - **Personalization**: Adapting content to child's age, preferences and interests
-- **Simplicity**: Keeping the interface simple and intuitive
+- **Enhanced Reading Experience**: Optimized typography, speech narration, and UI for children
+- **Simplicity**: Keeping the interface simple and intuitive with large touch targets
 - **Responsiveness**: Works well on tablets and desktop devices
 - **Performance**: Fast loading and smooth interactions
+- **Reliability**: Robust image handling with fallbacks and caching
 
 ## Development Guidelines
 
@@ -132,10 +174,26 @@ StoryBuddy implements a comprehensive personalization system:
 - **Character Customization**: Gender preferences (boy, girl) for story protagonists
 - **Personality Traits**: Character personalities that match the child's interests and values
 - **Theme Preferences**: UI themes and color schemes to match individual preferences
-- **Reading Preferences**: Font size options and reading mode preferences (standard or immersive)
+- **Typography Preferences**: Font family, size, line height, and letter spacing options
+- **Reading Preferences**: Reading mode (standard or immersive) and speech narration options 
+- **Voice Settings**: Voice selection and reading speed for text-to-speech narration
 
 ## Last Updated
 
+- Enhanced reader experience with larger pages and guaranteed image+text on every page - 03/15/2025
+- Added beautiful user interface with detailed progress tracking for image generation - 03/15/2025
+- Created theme-specific loading animations with decorative elements - 03/15/2025
+- Enhanced image quality with advanced prompt engineering for premium illustrations - 03/15/2025
+- Implemented art style definitions with scene composition and lighting guides - 03/15/2025  
+- Added sophisticated cover designs with theme-specific elements and interactive parallax effects - 03/15/2025
+- Implemented optimized image generation with batching, smart caching, progress events, and robust error recovery - 03/15/2025
+- Improved error handling with user-friendly recovery options and intelligent fallbacks - 03/15/2025
+- Added text-to-speech narration with child-friendly controls - 03/15/2025 
+- Created typography context for enhanced reading experience - 03/15/2025
+- Refactored components into modular folders (reader/, speech/, animations/, ui/) - 03/15/2025
+- Enhanced page rendering with improved animations and highlighting - 03/15/2025
+- Improved type system with UI component prop types - 03/15/2025
+- Added theme-based styling for reader components - 03/15/2025
 - Modularized codebase for improved maintainability - 03/15/2025
 - Added service layer for better business logic organization - 03/15/2025
 - Enhanced prompt system for more flexible story generation - 03/15/2025

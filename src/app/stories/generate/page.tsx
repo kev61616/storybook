@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Navigation from "../../components/Navigation";
-import { generateStory, generateImage, StoryData } from "../../utils/api";
-import ImmersiveReader from "../../components/ImmersiveReader";
+import { generateStory } from "../../utils/api";
+import { StoryData } from "../../types/story";
+import EnhancedReader from "../../components/reader/EnhancedReader";
+import { ImageManagementService, ImageGenerationProgress } from "../../services/imageManagementService";
+import ProgressTracker from "../../components/ui/ProgressTracker";
 
 /**
  * StoryGenerate page that displays a story generated from a template
@@ -33,10 +36,34 @@ function GenerateStoryContent() {
   
   // Story generation state
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'options' | 'generating-story' | 'generating-images' | 'complete'>('options');
-  const [progress, setProgress] = useState(0);
   const [story, setStory] = useState<StoryData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Enhanced progress tracking for better UX
+  const [progressState, setProgressState] = useState<ImageGenerationProgress>({
+    currentImage: 0,
+    totalImages: 0,
+    isCached: false,
+    imageStatus: 'success',
+    stage: 'preparation',
+    percentComplete: 0
+  });
+  
+  // Register for progress updates from the image management service
+  useEffect(() => {
+    // Only register when loading
+    if (!isLoading) return;
+    
+    // Set up the progress tracking subscription
+    const unsubscribe = ImageManagementService.onProgressUpdate((progress) => {
+      setProgressState(progress);
+    });
+    
+    // Clean up subscription when component unmounts or loading stops
+    return () => {
+      unsubscribe();
+    };
+  }, [isLoading]);
 
   // Helper function to get template title
   function getTemplateTitle() {
@@ -84,56 +111,106 @@ function GenerateStoryContent() {
     return emojis[template] || "📚";
   }
 
-  // Start story generation process
+  // Start story generation process with enhanced progress tracking
   const startGeneration = async () => {
     if (!template) return;
     
     setIsLoading(true);
     setShowOptions(false);
+    setError(null);
+    
+    // Initialize progress tracking
+    setProgressState({
+      currentImage: 0,
+      totalImages: 0,
+      isCached: false,
+      imageStatus: 'success',
+      stage: 'preparation',
+      percentComplete: 5
+    });
     
     try {
-      setCurrentStep('generating-story');
-      setProgress(10);
+      // Story generation phase
       
       // Generate story from the template using OpenAI
       // Include options in the template name
       const templateWithOptions = `${template} (length: ${storyLength}, reading level: ${readingLevel})`;
-      const storyData = await generateStory('template', templateWithOptions);
       
-      setProgress(40);
-      setStory(storyData);
+      console.log(`Generating story with template: ${templateWithOptions}`);
+      // Generate story from API and convert to our app's StoryData type
+      const apiStoryData = await generateStory('template', templateWithOptions);
       
-      // Generate images for the story paragraphs
-      if (storyData.imagePrompts && storyData.imagePrompts.length > 0) {
-        setCurrentStep('generating-images');
+      // Map the API reading level to our app's reading level format
+      const readingLevelMap: Record<string, 'easy' | 'moderate' | 'advanced'> = {
+        'simple': 'easy',
+        'standard': 'moderate', 
+        'advanced': 'advanced'
+      };
+      
+      // Convert to our app's StoryData format
+      const storyData: StoryData = {
+        ...apiStoryData,
+        readingLevel: readingLevelMap[apiStoryData.readingLevel || 'standard'] || 'moderate'
+      };
+      
+      // Create a unique ID for this story to use with the image management service
+      // This allows us to cache images and retrieve them later
+      const storyId = `story_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const storyWithId = { ...storyData, id: storyId };
+      
+      setStory(storyWithId);
+      // Image generation phase
+      
+      // Generate images for the story paragraphs using our enhanced image service
+      if (storyWithId.imagePrompts && storyWithId.imagePrompts.length > 0) {
+        console.log(`Starting image generation for ${storyWithId.imagePrompts.length} images`);
         
-        const images: string[] = [];
-        const totalImages = storyData.imagePrompts.length;
-        
-        // Generate each image sequentially
-        for (let i = 0; i < totalImages; i++) {
-          try {
-            const imageUrl = await generateImage(storyData.imagePrompts[i]);
-            images.push(imageUrl);
-          } catch (error) {
-            console.error(`Error generating image ${i}:`, error);
-            // If image generation fails, use a placeholder
-            images.push("https://placehold.co/600x400/e0f2fe/0284c7?text=Image+Generation+Failed");
+        try {
+          // Use the enhanced image management service that handles progress tracking
+          const images = await ImageManagementService.generateAllStoryImages(
+            storyId,
+            storyWithId.imagePrompts,
+            storyWithId.title,
+            template // Use the template as the theme for consistent styling
+          );
+          
+          // Update story with generated images
+          setStory(prevStory => prevStory ? { ...prevStory, images } : null);
+          
+        } catch (imageError) {
+          console.error("Error generating images:", imageError);
+          // Even if image generation fails, we still want to show the story
+          // The ImageManagementService will have provided fallbacks
+          const fallbackImages = ImageManagementService.getAllStoredImages(storyId);
+          if (fallbackImages.length > 0) {
+            setStory(prevStory => prevStory ? { ...prevStory, images: fallbackImages } : null);
+          } else {
+            // If no images were stored, create basic fallbacks
+            const defaultFallbacks = Array(storyWithId.imagePrompts.length).fill(
+              `https://placehold.co/800x800/e0f2fe/0284c7?text=Temporary+Illustration`
+            );
+            setStory(prevStory => prevStory ? { ...prevStory, images: defaultFallbacks } : null);
           }
-          setProgress(40 + Math.floor(((i + 1) / totalImages) * 60));
         }
-        
-        // Update story with generated images
-        setStory(prevStory => prevStory ? { ...prevStory, images } : null);
       }
       
-      setCurrentStep('complete');
-      setProgress(100);
+      // Complete phase
       setIsLoading(false);
+      
     } catch (error) {
       console.error("Error generating story:", error);
       setError(error instanceof Error ? error.message : 'Failed to generate story');
       setIsLoading(false);
+      
+      // Reset progress state on error
+      setProgressState({
+        currentImage: 0,
+        totalImages: 0,
+        isCached: false,
+        imageStatus: 'success',
+        stage: 'preparation',
+        percentComplete: 0
+      });
     }
   };
 
@@ -295,49 +372,50 @@ function GenerateStoryContent() {
             </div>
           </div>
         ) : isLoading ? (
-          // Loading state with progress bar and animated elements
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mb-6"></div>
-            <p className="font-[family-name:var(--font-baloo)] text-2xl text-purple-600 mb-6">
-              {currentStep === 'generating-story' 
-                ? "Creating your magical story..."
-                : "Drawing beautiful illustrations..."}
-            </p>
-            <div className="w-full max-w-md bg-gray-200 rounded-full h-5 mb-3">
-              <div 
-                className="bg-gradient-to-r from-purple-500 to-pink-500 h-5 rounded-full transition-all duration-300" 
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <div className="flex items-center text-sm text-gray-500">
-              <div className="animate-pulse mr-2">
-                {currentStep === 'generating-story' 
-                  ? "🧙‍♂️"
-                  : "🎨"}
-              </div>
-              <p>
-                {currentStep === 'generating-story' 
-                  ? "Our magical writers are crafting your story..."
-                  : "Our artists are drawing wonderful pictures..."}
-              </p>
-            </div>
-          </div>
+          // Enhanced loading UI with detailed progress information and theme-specific styling
+          <ProgressTracker 
+            progressState={progressState}
+            theme={template || 'default'}
+            emoji={getTemplateEmoji()}
+          />
         ) : error ? (
-          // Error state
-          <div className="text-center py-16">
-            <p className="text-xl text-red-500">
-              Oops! We couldn&apos;t create a story. {error}
-            </p>
-            <Link 
-              href="/stories/templates"
-              className="mt-6 inline-block py-3 px-6 bg-purple-600 text-white rounded-full"
-            >
-              Back to Templates
-            </Link>
+          // Enhanced error state with recovery options
+          <div className="text-center py-16 max-w-md mx-auto">
+            <div className="bg-red-50 rounded-lg p-6 border border-red-200 mb-6">
+              <div className="text-5xl mb-4">😢</div>
+              <h3 className="text-xl font-semibold text-red-700 mb-2">
+                Oops! Story Creation Issue
+              </h3>
+              <p className="text-gray-700 mb-4">
+                {error.includes('timed out') 
+                  ? "The illustration is taking too long to create. This could be because our magical artists are very busy right now."
+                  : error}
+              </p>
+              <div className="space-y-3 mt-6">
+                <button
+                  onClick={() => startGeneration()}
+                  className="w-full py-3 px-4 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    setShowOptions(true);
+                  }}
+                  className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  Change Story Options
+                </button>
+                <Link href="/stories/templates" className="block w-full py-3 px-4 bg-white hover:bg-gray-50 text-gray-500 rounded-lg border border-gray-200 transition-colors">
+                  Choose Different Template
+                </Link>
+              </div>
+            </div>
           </div>
         ) : story ? (
-          // Immersive Reader Component
-          <ImmersiveReader
+          // Enhanced Reader Component with image-per-page and larger display
+          <EnhancedReader
             story={story}
             onClose={() => {
               // Return to options or templates
